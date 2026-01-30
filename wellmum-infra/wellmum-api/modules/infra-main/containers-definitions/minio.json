@@ -1,0 +1,98 @@
+[
+    {
+        "cpu": 0,
+        "command": [
+            "server",
+            "--address",
+            ":10000",
+            "--console-address",
+            ":10001",
+            "/data"
+        ],
+        "secrets": [
+            {
+                "name": "MINIO_ROOT_USER",
+                "valueFrom": "${MINIO_SECRET_ARN}:MINIO_ROOT_USER::"
+            },
+            {
+                "name": "MINIO_ROOT_PASSWORD",
+                "valueFrom": "${MINIO_SECRET_ARN}:MINIO_ROOT_PASSWORD::"
+            }
+        ],
+        "environment": [],
+        "essential": true,
+        "image": "minio/minio",
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "minio",
+                "awslogs-create-group": "true",
+                "awslogs-region": "${AWS_REGION}",
+                "awslogs-stream-prefix": "minio"
+            }
+        },
+        "mountPoints": [
+            {
+                "sourceVolume": "${MINIO_DATA_VOLUME_NAME}",
+                "containerPath": "/data",
+                "readOnly": false
+            }
+        ],
+        "name": "minio",
+        "portMappings": [
+            {
+                "containerPort": 10000,
+                "hostPort": 10000,
+                "protocol": "tcp"
+            },
+            {
+                "containerPort": 10001,
+                "hostPort": 10001,
+                "protocol": "tcp"
+            }
+        ],
+        "systemControls": [],
+        "volumesFrom": []
+    },
+    {
+        "cpu": 0,
+        "command": [
+            "/bin/sh",
+            "-c",
+            "echo '⏳ Waiting for MinIO...'; until mc alias set myminio http://localhost:10000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do echo '🔁 Retrying connection to MinIO...'; sleep 2; done; echo '✅ MinIO is ready!'; mc mb myminio/public || true; mc mb myminio/private || true; mc anonymous set download myminio/public || true; echo '✅ Buckets created successfully!'; exit 0;"
+        ],
+        "secrets": [
+            {
+                "name": "MINIO_ROOT_USER",
+                "valueFrom": "${MINIO_SECRET_ARN}:MINIO_ROOT_USER::"
+            },
+            {
+                "name": "MINIO_ROOT_PASSWORD",
+                "valueFrom": "${MINIO_SECRET_ARN}:MINIO_ROOT_PASSWORD::"
+            }
+        ],
+        "environment": [],
+        "essential": false,
+        "image": "minio/mc",
+        "dependsOn": [
+            {
+                "containerName": "minio",
+                "condition": "START"
+            }
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "minio-createbuckets",
+                "awslogs-create-group": "true",
+                "awslogs-region": "${AWS_REGION}",
+                "awslogs-stream-prefix": "createbuckets"
+            }
+        },
+        "mountPoints": [],
+        "name": "createbuckets",
+        "portMappings": [],
+        "systemControls": [],
+        "volumesFrom": []
+    }
+]

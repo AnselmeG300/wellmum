@@ -1,0 +1,278 @@
+name: Terraform Infrastructure Deploy
+
+on:
+  push:
+    branches:
+      - feat/infra-wellmum-api
+      - main
+    paths:
+      - 'wellmum-infra/wellmum-network/**'
+      - 'wellmum-infra/wellmum-security/**'
+      - 'wellmum-infra/wellmum-stockage/**'
+      - 'wellmum-infra/wellmum-landing/**'
+      - 'wellmum-infra/wellmum-cluster/**'
+      - 'wellmum-infra/wellmum-api/**'
+      - 'wellmum-infra/wellmum-ai/**'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - feat/infra-wellmum-api
+      - main
+  workflow_dispatch:
+
+env:
+  TF_CLOUD_ORGANIZATION: "REX-WELLMUM-Services-Infrastructure"
+  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+  ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+  AUTO_APPROVE: ${{ github.ref == 'refs/heads/feat/infra-wellmum-api' && '-auto-approve' || '' }}
+
+jobs:
+  # Détection des changements pour optimiser les déploiements
+  detect-changes:
+    name: Detect Module Changes
+    runs-on: ubuntu-24.04
+    outputs:
+      network: ${{ steps.changes.outputs.network }}
+      security: ${{ steps.changes.outputs.security }}
+      stockage: ${{ steps.changes.outputs.stockage }}
+      landing: ${{ steps.changes.outputs.landing }}
+      cluster: ${{ steps.changes.outputs.cluster }}
+      api: ${{ steps.changes.outputs.api }}
+      ai: ${{ steps.changes.outputs.ai }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed modules
+        id: changes
+        run: |
+          # Si c'est le premier commit ou workflow_dispatch, déployer tout
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] || [ "${{ github.event.before }}" == "0000000000000000000000000000000000000000" ]; then
+            echo "network=true" >> $GITHUB_OUTPUT
+            echo "security=true" >> $GITHUB_OUTPUT
+            echo "stockage=true" >> $GITHUB_OUTPUT
+            echo "landing=true" >> $GITHUB_OUTPUT
+            echo "cluster=true" >> $GITHUB_OUTPUT
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "ai=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Détecter les changements par module
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-network/' && echo "network=true" >> $GITHUB_OUTPUT || echo "network=false" >> $GITHUB_OUTPUT
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-security/' && echo "security=true" >> $GITHUB_OUTPUT || echo "security=false" >> $GITHUB_OUTPUT
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-stockage/' && echo "stockage=true" >> $GITHUB_OUTPUT || echo "stockage=false" >> $GITHUB_OUTPUT
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-landing/' && echo "landing=true" >> $GITHUB_OUTPUT || echo "landing=false" >> $GITHUB_OUTPUT
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-cluster/' && echo "cluster=true" >> $GITHUB_OUTPUT || echo "cluster=false" >> $GITHUB_OUTPUT
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-api/' && echo "api=true" >> $GITHUB_OUTPUT || echo "api=false" >> $GITHUB_OUTPUT
+          git diff --name-only HEAD~1 HEAD | grep -E '^wellmum-ai/' && echo "ai=true" >> $GITHUB_OUTPUT || echo "ai=false" >> $GITHUB_OUTPUT
+          
+          # Si workflow modifié, redéployer tout
+          if git diff --name-only HEAD~1 HEAD | grep -E '^\.github/workflows/'; then
+            echo "network=true" >> $GITHUB_OUTPUT
+            echo "security=true" >> $GITHUB_OUTPUT
+            echo "stockage=true" >> $GITHUB_OUTPUT
+            echo "landing=true" >> $GITHUB_OUTPUT
+            echo "cluster=true" >> $GITHUB_OUTPUT
+            echo "api=true" >> $GITHUB_OUTPUT
+            echo "ai=true" >> $GITHUB_OUTPUT
+          fi
+
+  # 1. Network (VPC, Subnets, NAT, etc.)
+  deploy-network:
+    name: 1️⃣ Deploy Network
+    runs-on: ubuntu-24.04
+    needs: detect-changes
+    if: needs.detect-changes.outputs.network == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-network
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+
+  # 2. Security (IAM, Secrets, KMS, etc.)
+  deploy-security:
+    name: 2️⃣ Deploy Security
+    runs-on: ubuntu-24.04
+    needs: [detect-changes, deploy-network]
+    if: |
+      always() &&
+      (needs.deploy-network.result == 'success' || needs.deploy-network.result == 'skipped') &&
+      needs.detect-changes.outputs.security == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-security
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+
+  # 3. Stockage (EFS, S3, etc.)
+  deploy-stockage:
+    name: 3️⃣ Deploy Stockage
+    runs-on: ubuntu-24.04
+    needs: [detect-changes, deploy-security]
+    if: |
+      always() &&
+      (needs.deploy-security.result == 'success' || needs.deploy-security.result == 'skipped') &&
+      needs.detect-changes.outputs.stockage == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-stockage
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+
+  # 4. Landing (Amplify)
+  deploy-landing:
+    name: 4️⃣ Deploy Landing
+    runs-on: ubuntu-24.04
+    needs: [detect-changes, deploy-stockage]
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'feat/infra-wellmum-apiment' }}
+    if: |
+      always() &&
+      (needs.deploy-stockage.result == 'success' || needs.deploy-stockage.result == 'skipped') &&
+      needs.detect-changes.outputs.landing == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-landing/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+
+  # 5. Cluster ECS
+  deploy-cluster:
+    name: 5️⃣ Deploy Cluster
+    runs-on: ubuntu-24.04
+    needs: [detect-changes, deploy-landing]
+    if: |
+      always() &&
+      (needs.deploy-landing.result == 'success' || needs.deploy-landing.result == 'skipped') &&
+      needs.detect-changes.outputs.cluster == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-cluster
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+
+  # 7. AI (ECS Services)
+  deploy-ai:
+    name: 7️⃣ Deploy AI
+    runs-on: ubuntu-24.04
+    needs: [detect-changes, deploy-cluster]
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'feat/infra-wellmum-apiment' }}
+    if: |
+      always() &&
+      (needs.deploy-cluster.result == 'success' || needs.deploy-cluster.result == 'skipped') &&
+      needs.detect-changes.outputs.ai == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-ai/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+
+  # 6. API (ECS Services, ALB, RDS)
+  deploy-api:
+    name: 6️⃣ Deploy API
+    runs-on: ubuntu-24.04
+    needs: [detect-changes, deploy-ai]
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'feat/infra-wellmum-apiment' }}
+    if: |
+      always() &&
+      (needs.deploy-ai.result == 'success' || needs.deploy-ai.result == 'skipped') &&
+      needs.detect-changes.outputs.api == 'true'
+    defaults:
+      run:
+        working-directory: wellmum-infra/wellmum-api/${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+          terraform_version: "~1.9"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply ${{ env.AUTO_APPROVE }}
+

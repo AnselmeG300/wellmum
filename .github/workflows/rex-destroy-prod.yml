@@ -1,0 +1,91 @@
+name: Destroy Production Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "destroy-prod" to confirm destruction of PROD infrastructure'
+        required: true
+        type: string
+
+env:
+  TF_CLOUD_ORGANIZATION: "REX-WELLMUM-Services-Infrastructure"
+  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+jobs:
+  confirm-destroy:
+    name: Confirm Destruction
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "destroy-prod" ]; then
+            echo "❌ Confirmation failed. You must type 'destroy-prod' exactly."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+          echo ""
+          echo "⚠️⚠️⚠️ WARNING ⚠️⚠️⚠️"
+          echo "You are about to DESTROY the PRODUCTION infrastructure!"
+          echo "This action is IRREVERSIBLE!"
+
+  destroy-landing-prod:
+    name: 🔥 Destroy Landing Prod
+    runs-on: ubuntu-24.04
+    needs: confirm-destroy
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: wellmum-landing
+          module-path: wellmum-landing/prod
+
+  destroy-api-prod:
+    name: 🔥 Destroy API Prod
+    runs-on: ubuntu-24.04
+    needs: destroy-landing-prod
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: prod-rex-wellmum-api
+          module-path: wellmum-api/prod
+
+  destroy-ai-prod:
+    name: 🔥 Destroy AI Prod
+    runs-on: ubuntu-24.04
+    needs: destroy-api-prod
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: prod-rex-wellmum-ai
+          module-path: wellmum-ai/prod
+
+  summary:
+    name: 📊 Destruction Summary
+    runs-on: ubuntu-24.04
+    needs: [destroy-landing-prod, destroy-api-prod, destroy-ai-prod]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🔥 Production Infrastructure Destruction Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Landing Prod | ${{ needs.destroy-landing-prod.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Prod | ${{ needs.destroy-api-prod.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Prod | ${{ needs.destroy-ai-prod.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Production environment destroyed**" >> $GITHUB_STEP_SUMMARY
+
