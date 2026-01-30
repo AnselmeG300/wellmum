@@ -1,0 +1,66 @@
+name: Build and Push api Service
+
+on:
+  push:
+    branches:
+      - test
+      - main
+    paths:
+      - 'wellmum-api/**'
+      - '.github/workflows/rex-deploy-api.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: rex-wellmum-api
+
+jobs:
+  build-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-24.04
+    outputs:
+      image: ${{ steps.build-image.outputs.image }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        
+      - name: Set image tag
+        id: set-tag
+        run: |
+          
+          # Créer aussi des tags par environnement
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            ENV_TAG="main"
+            COMMIT_TAG="main-${{ github.sha }}"
+          else
+            ENV_TAG="develop"
+            COMMIT_TAG="develop-${{ github.sha }}"
+          fi
+          
+          echo "COMMIT_TAG=$COMMIT_TAG" >> $GITHUB_ENV
+          echo "ENV_TAG=$ENV_TAG" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$ENV_TAG ./wellmum-api
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$ENV_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$ENV_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$COMMIT_TAG" >> $GITHUB_OUTPUT
+        
+          

@@ -1,10 +1,9 @@
-terraform { 
-  cloud { 
-    
-    organization = "REX-WELLMUM-Services-Infrastructure" 
+terraform {
+  cloud {
+    organization = "REX-WELLMUM-Services-Infrastructure"
+    workspaces {
+      name = "prod-rex-wellmum-api"
+    }
+  }
 
-    workspaces { 
-      name = "prod-rex-wellmum-api" 
-    } 
-  } 
 }

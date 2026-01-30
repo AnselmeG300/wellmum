@@ -1,0 +1,190 @@
+[
+    {
+        "cpu": 0,
+        "environment": [
+            {
+                "name": "NODE_ENV",
+                "value": "${ENVIRONMENT}"
+            },
+            {
+                "name": "PORT",
+                "value": "3000"
+            },
+            {
+                "name": "APP_NAME",
+                "value": "MamaFit"
+            },
+            {
+                "name": "APP_BASE_URL",
+                "value": "${APP_BASE_URL}"
+            },
+            {
+                "name": "DATABASE_URL",
+                "value": "${DATABASE_URL}"
+            },
+            {
+                "name": "JWT_ACCESS_EXPIRATION",
+                "value": "${JWT_ACCESS_EXPIRATION}"
+            },
+            {
+                "name": "JWT_REFRESH_EXPIRATION",
+                "value": "${JWT_REFRESH_EXPIRATION}"
+            },
+            {
+                "name": "GOOGLE_CALLBACK_URL",
+                "value": "${GOOGLE_CALLBACK_URL}"
+            },
+            {
+                "name": "OTP_EXPIRATION",
+                "value": "${OTP_EXPIRATION}"
+            },
+            {
+                "name": "OTP_STEP",
+                "value": "${OTP_STEP}"
+            },
+            {
+                "name": "OTP_DIGITS",
+                "value": "${OTP_DIGITS}"
+            },
+            {
+                "name": "SMTP_HOST",
+                "value": "mailhog.wellmum-api"
+            },
+            {
+                "name": "SMTP_PORT",
+                "value": "1025"
+            },
+            {
+                "name": "SMTP_USER",
+                "value": "${SMTP_USER}"
+            },
+            {
+                "name": "SMTP_FROM",
+                "value": "noreply@wellmum.com"
+            },
+            {
+                "name": "SMTP_SECURE",
+                "value": "false"
+            },
+            {
+                "name": "FRONTEND_URL",
+                "value": "${FRONTEND_URL}"
+            },
+            {
+                "name": "ALLOWED_ORIGINS",
+                "value": "${ALLOWED_ORIGINS}"
+            },
+            {
+                "name": "STORAGE_PROVIDER",
+                "value": "minio"
+            },
+            {
+                "name": "MINIO_ENDPOINT",
+                "value": "${MINIO_ENDPOINT}"
+            },
+            {
+                "name": "MINIO_PORT",
+                "value": "10000"
+            },
+            {
+                "name": "MINIO_USE_SSL",
+                "value": "false"
+            },
+            {
+                "name": "MINIO_PUBLIC_BUCKET",
+                "value": "public"
+            },
+            {
+                "name": "MINIO_PRIVATE_BUCKET",
+                "value": "private"
+            },
+            {
+                "name": "AWS_S3_BUCKET_NAME",
+                "value": "${AWS_S3_BUCKET_NAME}"
+            },
+            {
+                "name": "AI_CHAT_URL",
+                "value": "${AI_CHAT_URL}"
+            },
+            {
+                "name": "AI_FOOD_DETECTOR_URL",
+                "value": "${AI_FOOD_DETECTOR_URL}"
+            },
+            {
+                "name": "AI_NUTRITION_URL",
+                "value": "${AI_NUTRITION_URL}"
+            },
+            {
+                "name": "AI_ROUTINES_URL",
+                "value": "${AI_ROUTINES_URL}"
+            },
+            {
+                "name": "AI_SOCIAL_URL",
+                "value": "${AI_SOCIAL_URL}"
+            }
+        ],
+        "secrets": [
+            {
+                "name": "JWT_SECRET",
+                "valueFrom": "${JWT_SECRET_ARN}"
+            },
+            {
+                "name": "SWAGGER_USER",
+                "valueFrom": "${SWAGGER_USER_ARN}"
+            },
+            {
+                "name": "SWAGGER_PASSWORD",
+                "valueFrom": "${SWAGGER_PASSWORD_ARN}"
+            },
+            {
+                "name": "GOOGLE_CLIENT_ID",
+                "valueFrom": "${GOOGLE_CLIENT_ID_ARN}"
+            },
+            {
+                "name": "GOOGLE_CLIENT_SECRET",
+                "valueFrom": "${GOOGLE_CLIENT_SECRET_ARN}"
+            },
+            {
+                "name": "OTP_SECRET",
+                "valueFrom": "${OTP_SECRET_ARN}"
+            },
+            {
+                "name": "SMTP_PASSWORD",
+                "valueFrom": "${SMTP_PASSWORD_ARN}"
+            },
+            {
+                "name": "SESSION_SECRET",
+                "valueFrom": "${SESSION_SECRET_ARN}"
+            },
+            {
+                "name": "MINIO_ACCESS_KEY",
+                "valueFrom": "${MINIO_SECRET_ARN}:MINIO_ROOT_USER::"
+            },
+            {
+                "name": "MINIO_SECRET_KEY",
+                "valueFrom": "${MINIO_SECRET_ARN}:MINIO_ROOT_PASSWORD::"
+            }
+        ],
+        "essential": true,
+        "image": "${IMAGE}",
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "/ecs/${ENVIRONMENT}-${PROJECT_NAME}-api",
+                "awslogs-create-group": "true",
+                "awslogs-region": "${AWS_REGION}",
+                "awslogs-stream-prefix": "ecs"
+            }
+        },
+        "mountPoints": [],
+        "name": "api",
+        "portMappings": [
+            {
+                "containerPort": 3000,
+                "protocol": "tcp"
+            }
+        ],
+        "systemControls": [],
+        "volumesFrom": []
+    }
+]

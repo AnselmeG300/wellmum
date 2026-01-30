@@ -1,0 +1,36 @@
+name: 'Terraform Destroy'
+description: 'Destroy Terraform infrastructure using Terraform Cloud'
+
+inputs:
+  workspace:
+    description: 'Terraform Cloud workspace name'
+    required: true
+  module-path:
+    description: 'Path to the Terraform module'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        cli_config_credentials_token: ${{ env.TF_API_TOKEN }}
+
+    - name: Terraform Init
+      shell: bash
+      working-directory: wellmum-infra/${{ inputs.module-path }}
+      run: |
+        terraform init
+
+    - name: Select Workspace
+      shell: bash
+      working-directory: wellmum-infra/${{ inputs.module-path }}
+      run: |
+        terraform workspace select ${{ inputs.workspace }} || terraform workspace new ${{ inputs.workspace }}
+
+    - name: Terraform Destroy
+      shell: bash
+      working-directory: wellmum-infra/${{ inputs.module-path }}
+      run: |
+        terraform destroy -auto-approve
