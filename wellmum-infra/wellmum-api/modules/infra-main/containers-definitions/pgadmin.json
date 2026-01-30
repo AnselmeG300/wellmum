@@ -1,0 +1,59 @@
+[
+  {
+    "name": "pgadmin",
+    "image": "dpage/pgadmin4:8.9",
+    "environment": [
+      {
+        "name": "PGADMIN_LISTEN_PORT",
+        "value": "80"
+      },
+      {
+        "name": "PGADMIN_CONFIG_PROXY_X_FOR_COUNT",
+        "value": "1"
+      },
+      {
+        "name": "PGADMIN_CONFIG_PROXY_X_PROTO_COUNT",
+        "value": "1"
+      },
+      {
+        "name": "PGADMIN_CONFIG_PROXY_X_HOST_COUNT",
+        "value": "1"
+      }
+    ],
+    "essential": true,
+    "secrets": [
+      {
+        "name": "pgadmin_email",
+        "valueFrom": "${PG_ADMIN_SECRET_ARN}:PGADMIN_EMAIL::"
+      },
+      {
+        "name": "pgadmin_password",
+        "valueFrom": "${PG_ADMIN_SECRET_ARN}:PGADMIN_PASSWORD::"
+      },
+      {
+        "name": "PGADMIN_DEFAULT_EMAIL",
+        "valueFrom": "${PG_ADMIN_SECRET_ARN}:PGADMIN_EMAIL::"
+      },
+      {
+        "name": "PGADMIN_DEFAULT_PASSWORD",
+        "valueFrom": "${PG_ADMIN_SECRET_ARN}:PGADMIN_PASSWORD::"
+      }
+    ],
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 80,
+        "protocol": "tcp"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/${ENVIRONMENT}-${PROJECT_NAME}-bastion",
+        "awslogs-region": "${AWS_REGION}",
+        "awslogs-stream-prefix": "ecs",
+        "awslogs-create-group": "true"
+      }
+    }
+  }
+]
