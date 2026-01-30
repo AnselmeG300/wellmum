@@ -3,7 +3,7 @@ name: Build and Push food detector Service
 on:
   push:
     branches:
-      - feat/infra-wellmum-api
+      - test
       - main
     paths:
       - 'wellmum-ai/food_detector/**'

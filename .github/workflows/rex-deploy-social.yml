@@ -3,7 +3,7 @@ name: Build and Push social Service
 on:
   push:
     branches:
-      - feat/infra-wellmum-api
+      - test
       - main
     paths:
       - 'wellmum-ai/social/**'

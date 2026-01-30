@@ -3,7 +3,7 @@ name: Build and Push routines Service
 on:
   push:
     branches:
-      - feat/infra-wellmum-api
+      - test
       - main
     paths:
       - 'wellmum-ai/routines/**'

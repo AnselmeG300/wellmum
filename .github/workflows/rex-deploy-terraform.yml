@@ -3,7 +3,7 @@ name: Terraform Infrastructure Deploy
 on:
   push:
     branches:
-      - feat/infra-wellmum-api
+      - test
       - main
     paths:
       - 'wellmum-infra/wellmum-network/**'
@@ -16,7 +16,7 @@ on:
       - '.github/workflows/**'
   pull_request:
     branches:
-      - feat/infra-wellmum-api
+      - test
       - main
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ env:
   TF_CLOUD_ORGANIZATION: "REX-WELLMUM-Services-Infrastructure"
   TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
   ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
-  AUTO_APPROVE: ${{ github.ref == 'refs/heads/feat/infra-wellmum-api' && '-auto-approve' || '' }}
+  AUTO_APPROVE: ${{ github.ref == 'refs/heads/test' && '-auto-approve' || '' }}
 
 jobs:
   # Détection des changements pour optimiser les déploiements
@@ -166,7 +166,7 @@ jobs:
     name: 4️⃣ Deploy Landing
     runs-on: ubuntu-24.04
     needs: [detect-changes, deploy-stockage]
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'feat/infra-wellmum-apiment' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'testment' }}
     if: |
       always() &&
       (needs.deploy-stockage.result == 'success' || needs.deploy-stockage.result == 'skipped') &&
@@ -223,7 +223,7 @@ jobs:
     name: 7️⃣ Deploy AI
     runs-on: ubuntu-24.04
     needs: [detect-changes, deploy-cluster]
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'feat/infra-wellmum-apiment' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'testment' }}
     if: |
       always() &&
       (needs.deploy-cluster.result == 'success' || needs.deploy-cluster.result == 'skipped') &&
@@ -252,7 +252,7 @@ jobs:
     name: 6️⃣ Deploy API
     runs-on: ubuntu-24.04
     needs: [detect-changes, deploy-ai]
-    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'feat/infra-wellmum-apiment' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'testment' }}
     if: |
       always() &&
       (needs.deploy-ai.result == 'success' || needs.deploy-ai.result == 'skipped') &&
