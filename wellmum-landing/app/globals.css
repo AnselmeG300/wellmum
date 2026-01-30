@@ -1,12 +1,9 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 * {
   scroll-behavior: smooth;
-}
-
-@theme inline {
-  --font-inter: "Inter", sans-serif;
-  --font-chloe: "Chloe", serif;
 }
 
 :root {
