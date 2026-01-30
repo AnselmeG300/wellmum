@@ -40,7 +40,7 @@ jobs:
       - name: Destroy Infrastructure
         uses: ./.github/actions/terraform-destroy
         with:
-          workspace: wellmum-landing
+          workspace: prod-wellmum-landing
           module-path: wellmum-landing/prod
 
   destroy-api-prod:

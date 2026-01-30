@@ -35,7 +35,7 @@ jobs:
       - name: Destroy Infrastructure
         uses: ./.github/actions/terraform-destroy
         with:
-          workspace: rex-wellmum-landing-dev
+          workspace: dev-rex-wellmum-landing
           module-path: wellmum-landing/dev
 
   destroy-api-dev:
@@ -48,7 +48,7 @@ jobs:
       - name: Destroy Infrastructure
         uses: ./.github/actions/terraform-destroy
         with:
-          workspace: Dev-Rex-Wellmum
+          workspace: dev-rex-wellmum-api
           module-path: wellmum-api/dev
 
   destroy-ai-dev:
@@ -61,7 +61,7 @@ jobs:
       - name: Destroy Infrastructure
         uses: ./.github/actions/terraform-destroy
         with:
-          workspace: rex-wellmum-ai-dev
+          workspace: dev-rex-wellmum-ai
           module-path: wellmum-ai/dev
 
   summary:
