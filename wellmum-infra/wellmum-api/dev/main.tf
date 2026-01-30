@@ -14,6 +14,7 @@ module "rex_wellmum_api" {
     minio         = "minio"
     createbuckets = "createbuckets"
     api           = "api"
+    bastion       = "pgadmin"
   }
 
   # Service scaling
