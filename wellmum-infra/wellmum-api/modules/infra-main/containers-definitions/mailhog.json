@@ -1,0 +1,33 @@
+[
+    {
+        "cpu": 0,
+        "environment": [],
+        "essential": true,
+        "image": "mailhog/mailhog",
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "mailhog",
+                "awslogs-create-group": "true",
+                "awslogs-region": "${AWS_REGION}",
+                "awslogs-stream-prefix": "mailhog"
+            }
+        },
+        "mountPoints": [],
+        "name": "mailhog",
+        "portMappings": [
+            {
+                "containerPort": 1025,
+                "hostPort": 1025,
+                "protocol": "tcp"
+            },
+            {
+                "containerPort": 8025,
+                "hostPort": 8025,
+                "protocol": "tcp"
+            }
+        ],
+        "systemControls": [],
+        "volumesFrom": []
+    }
+]

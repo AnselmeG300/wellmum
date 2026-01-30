@@ -1,0 +1,43 @@
+[
+    {
+        "cpu": 0,
+        "environment": [
+            {
+                "name": "ENV",
+                "value": "${ENVIRONMENT}"
+            },
+            {
+                "name": "PORT",
+                "value": "8003"
+            }
+        ],
+        "essential": true,
+        "image": "${IMAGE}",
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "/ecs/${ENVIRONMENT}-${PROJECT_NAME}-social",
+                "awslogs-create-group": "true",
+                "awslogs-region": "${AWS_REGION}",
+                "awslogs-stream-prefix": "ecs"
+            }
+        },
+        "healthCheck": {
+            "command": ["CMD-SHELL", "curl -f http://localhost:8003/healthz || exit 1"],
+            "interval": 300,
+            "timeout": 5,
+            "retries": 3,
+            "startPeriod": 60
+        },
+        "mountPoints": [],
+        "name": "social",
+        "portMappings": [
+            {
+                "containerPort": 8003,
+                "protocol": "tcp"
+            }
+        ],
+        "systemControls": [],
+        "volumesFrom": []
+    }
+]
