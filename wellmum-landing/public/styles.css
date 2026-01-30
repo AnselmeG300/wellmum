@@ -1,0 +1,21 @@
+:root{--bg:#f7f7f7;--card:#fff;--muted:#8b8b8b;--accent:#e9a8a8;--green:#7eaea0}
+*{box-sizing:border-box}
+body{font-family:Inter, system-ui, Arial, sans-serif;background:var(--bg);margin:0;color:#222}
+.top{display:flex;justify-content:space-between;align-items:center;padding:24px 48px}
+.logo{font-weight:700;color:#b84f4f}
+.nav a{margin-left:20px;color:#666}
+.hero{max-width:1150px;margin:40px auto;background:#fff;border-radius:28px;padding:48px;display:flex;gap:24px;align-items:center}
+.hero-left{flex:1}
+.hero-right{width:420px;display:flex;justify-content:center}
+h1{font-size:56px;line-height:0.95;margin:0 0 20px;font-family:serif}
+.accent{color:var(--accent)}
+.lead{color:var(--muted);line-height:1.6;margin-bottom:28px}
+.cta-row{display:flex;gap:16px}
+.btn{padding:14px 22px;border-radius:10px;border:0;cursor:pointer}
+.btn.primary{background:var(--green);color:white}
+.btn.ghost{background:#eaf4ef;color:#3a6b62}
+.card-image{width:360px;height:260px;background:linear-gradient(180deg,#fff,#f3f3f3);border-radius:18px;position:relative;box-shadow:0 6px 20px rgba(0,0,0,.08)}
+.badge{position:absolute;right:12px;top:20px;background:#fff;padding:8px 12px;border-radius:12px;font-weight:700;color:#2a6c78;box-shadow:0 6px 18px rgba(0,0,0,.08);text-align:center}
+
+/* small screens */
+@media(max-width:900px){.hero{flex-direction:column;padding:28px}.hero-right{width:100%}.hero{margin:16px}}
