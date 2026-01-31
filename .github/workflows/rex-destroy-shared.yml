@@ -1,0 +1,106 @@
+name: Destroy Shared Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "destroy-shared" to confirm destruction of SHARED infrastructure'
+        required: true
+        type: string
+
+env:
+  TF_CLOUD_ORGANIZATION: "REX-WELLMUM-Services-Infrastructure"
+  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+jobs:
+  confirm-destroy:
+    name: Confirm Destruction
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "destroy-shared" ]; then
+            echo "❌ Confirmation failed. You must type 'destroy-shared' exactly."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+          echo ""
+          echo "⚠️⚠️⚠️ WARNING ⚠️⚠️⚠️"
+          echo "You are about to DESTROY the SHARED infrastructure!"
+          echo "This will affect BOTH dev AND prod environments!"
+          echo "This action is IRREVERSIBLE!"
+
+  destroy-cluster:
+    name: 🔥 Destroy Cluster
+    runs-on: ubuntu-24.04
+    needs: confirm-destroy
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: rex-wellmum-cluster
+          module-path: wellmum-cluster
+
+  destroy-stockage:
+    name: 🔥 Destroy Stockage
+    runs-on: ubuntu-24.04
+    needs: destroy-cluster
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: rex-wellmum-stockage
+          module-path: wellmum-stockage
+
+  destroy-security:
+    name: 🔥 Destroy Security
+    runs-on: ubuntu-24.04
+    needs: destroy-stockage
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: rex-wellmum-security
+          module-path: wellmum-security
+
+  destroy-network:
+    name: 🔥 Destroy Network
+    runs-on: ubuntu-24.04
+    needs: destroy-security
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: rex-wellmum-network
+          module-path: wellmum-network
+
+  summary:
+    name: 📊 Destruction Summary
+    runs-on: ubuntu-24.04
+    needs: [destroy-cluster, destroy-stockage, destroy-security, destroy-network]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🔥 Shared Infrastructure Destruction Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Cluster | ${{ needs.destroy-cluster.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Stockage | ${{ needs.destroy-stockage.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.destroy-security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Network | ${{ needs.destroy-network.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Shared infrastructure destroyed**" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **This affects both dev and prod environments**" >> $GITHUB_STEP_SUMMARY
+

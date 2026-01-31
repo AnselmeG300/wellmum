@@ -1,0 +1,85 @@
+name: Destroy Development Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type "destroy-dev" to confirm destruction of DEV infrastructure'
+        required: true
+        type: string
+
+env:
+  TF_CLOUD_ORGANIZATION: "REX-WELLMUM-Services-Infrastructure"
+  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+jobs:
+  confirm-destroy:
+    name: Confirm Destruction
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate Confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirmation }}" != "destroy-dev" ]; then
+            echo "❌ Confirmation failed. You must type 'destroy-dev' exactly."
+            exit 1
+          fi
+          echo "✅ Confirmation validated"
+
+  destroy-landing-dev:
+    name: 🔥 Destroy Landing Dev
+    runs-on: ubuntu-24.04
+    needs: confirm-destroy
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: dev-rex-wellmum-landing
+          module-path: wellmum-landing/dev
+
+  destroy-api-dev:
+    name: 🔥 Destroy API Dev
+    runs-on: ubuntu-24.04
+    needs: destroy-landing-dev
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: dev-rex-wellmum-api
+          module-path: wellmum-api/dev
+
+  destroy-ai-dev:
+    name: 🔥 Destroy AI Dev
+    runs-on: ubuntu-24.04
+    needs: destroy-api-dev
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Destroy Infrastructure
+        uses: ./.github/actions/terraform-destroy
+        with:
+          workspace: dev-rex-wellmum-ai
+          module-path: wellmum-ai/dev
+
+  summary:
+    name: 📊 Destruction Summary
+    runs-on: ubuntu-24.04
+    needs: [destroy-landing-dev, destroy-api-dev, destroy-ai-dev]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🔥 Development Infrastructure Destruction Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Module | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Landing Dev | ${{ needs.destroy-landing-dev.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Dev | ${{ needs.destroy-api-dev.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AI Dev | ${{ needs.destroy-ai-dev.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Development environment destroyed**" >> $GITHUB_STEP_SUMMARY
