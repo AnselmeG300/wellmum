@@ -12,6 +12,7 @@ env:
   TF_CLOUD_ORGANIZATION: "REX-WELLMUM-Services-Infrastructure"
   TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
 
+
 jobs:
   confirm-destroy:
     name: Confirm Destruction

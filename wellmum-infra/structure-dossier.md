@@ -7,6 +7,7 @@ On distingue deux grandes catégories :
 1. **Les dossiers Core (infrastructure de base)**
 2. **Les dossiers Application (infrastructure liée aux services applicatifs)**
 
+
 ---
 
 ## 1. Dossiers Core

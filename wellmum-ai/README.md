@@ -4,6 +4,7 @@ Microservices AI pour l'application WellMum, basés sur FastAPI avec Docker et n
 
 ## 📦 Composants
 
+
 ### 1. **Chat** (Port 8002)
 Service de chat IA pour interactions utilisateur.
 - Endpoint health: `GET /healthz`
